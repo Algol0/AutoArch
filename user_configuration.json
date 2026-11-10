@@ -68,7 +68,12 @@
     "bind-tools",
     "nodejs",
     "npm",
-    "htmlq"
+    "htmlq",
+    "meson",
+    "ninja",
+    "typescript",
+    "uv",
+    "typescript"
   ],
   "services": [
     "lightdm",

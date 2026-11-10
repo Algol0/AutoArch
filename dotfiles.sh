@@ -106,13 +106,43 @@ DesktopNames=bspwm
 EOF
 fi
 
-# Drop-in en lugar de sed sobre lightdm.conf: idempotente y no pisa nada.
+# LightDM Greeter web-greeter
+
+install_web_greeter() {
+  local build
+  pacman -S --noconfirm --needed git gcc make meson ninja typescript uv \
+    gobject-introspection cairo libx11 libxcb python || return 1
+  build="$(mktemp -d)" || return 1
+  chown "$USER_NAME:$USER_GROUP" "$build"
+  as_user git clone --depth 1 https://aur.archlinux.org/web-greeter.git \
+    "$build/web-greeter" || return 1
+  # makepkg no corre como root: se compila como el usuario y se instala como root
+  ( cd "$build/web-greeter" && as_user makepkg -f --noconfirm ) || return 1
+  pacman -U --noconfirm "$build"/web-greeter/web-greeter-[0-9]*.pkg.tar.* || return 1
+  rm -rf "$build"
+}
+
+GREETER=lightdm-slick-greeter
+if pacman -Q web-greeter &>/dev/null || install_web_greeter; then
+  install -d /usr/share/web-greeter/themes/eclipse
+  cp -r "$REPO_DIR"/greeter/eclipse/. /usr/share/web-greeter/themes/eclipse/
+  chmod -R a+rX /usr/share/web-greeter/themes/eclipse
+  if [ -f /etc/lightdm/web-greeter.toml ]; then
+    sed -i 's/^theme *=.*/theme = "eclipse"/' /etc/lightdm/web-greeter.toml
+    GREETER=web-greeter
+  else
+    warn "no existe web-greeter.toml; se usa slick-greeter"
+  fi
+else
+  warn "web-greeter no se pudo instalar; se usa lightdm-slick-greeter"
+fi
+
 install -d /etc/lightdm/lightdm.conf.d
-cat > /etc/lightdm/lightdm.conf.d/50-autoarch.conf <<'EOF'
+cat > /etc/lightdm/lightdm.conf.d/50-autoarch.conf <<EOF_LDM
 [Seat:*]
-greeter-session=lightdm-slick-greeter
+greeter-session=$GREETER
 user-session=bspwm
-EOF
+EOF_LDM
 
 cat > /etc/lightdm/slick-greeter.conf <<'EOF'
 [Greeter]
@@ -120,7 +150,8 @@ show-hostname=false
 background=/usr/share/backgrounds/greeter-wall.jpg
 font-name=HackNerdFont
 EOF
-ok "LightDM configurado"
+
+ok "LightDM configurado ($GREETER)"
 
 # ------------------------------------------------------------------- zsh ---
 log "Configurando zsh y starship"
