@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Eclipse greeter</title>
+<style>
+:root{--bg:#060509;--rim:#e11d48;--ring:#8a1230;--ice:#ffe4ea;--dim:#b86b7e;--cy:#00e5ff}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ice);overflow:hidden;
+font-family:"JetBrains Mono","Fira Code","SF Mono",ui-monospace,Menlo,Consolas,monospace}
+body{display:flex;align-items:center;justify-content:center}
+body::before{content:"";position:fixed;left:0;top:0;right:0;bottom:0;z-index:9;pointer-events:none;
+background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.65) 100%)}
+.grid{position:absolute;left:-20%;right:-20%;bottom:-6vh;height:46vh;opacity:.4;
+background:linear-gradient(rgba(225,29,72,.45) 1px,transparent 1px) 0 0/100% 42px,linear-gradient(90deg,rgba(225,29,72,.45) 1px,transparent 1px) 0 0/60px 100%;
+transform:perspective(420px) rotateX(62deg);transform-origin:bottom;
+-webkit-mask-image:linear-gradient(transparent,#000 70%);mask-image:linear-gradient(transparent,#000 70%)}
+.frame{position:fixed;left:2vmin;top:2vmin;right:2vmin;bottom:2vmin;pointer-events:none;
+background:linear-gradient(var(--rim),var(--rim)) 0 0/34px 2px,linear-gradient(var(--rim),var(--rim)) 0 0/2px 34px,
+linear-gradient(var(--rim),var(--rim)) 100% 0/34px 2px,linear-gradient(var(--rim),var(--rim)) 100% 0/2px 34px,
+linear-gradient(var(--rim),var(--rim)) 0 100%/34px 2px,linear-gradient(var(--rim),var(--rim)) 0 100%/2px 34px,
+linear-gradient(var(--rim),var(--rim)) 100% 100%/34px 2px,linear-gradient(var(--rim),var(--rim)) 100% 100%/2px 34px;
+background-repeat:no-repeat}
+.stage{--s:min(82vmin,720px);position:relative;width:var(--s);height:var(--s)}
+.stage svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
+.orbit{transform-origin:512px 512px;animation:spin 140s linear infinite}
+.star{transform-origin:312px 364px;animation:twinkle 5s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes twinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.82)}}
+.rim{transition:stroke .2s}
+.stage svg.g{animation:glitch .26s steps(2) 1}
+@keyframes glitch{0%{transform:translate(0)}
+20%{transform:translate(-8px,2px) skewX(3deg);filter:drop-shadow(5px 0 var(--cy)) drop-shadow(-5px 0 #f04)}
+40%{transform:translate(7px,-2px);filter:drop-shadow(-5px 0 var(--cy)) drop-shadow(5px 0 #f04)}
+60%{transform:translate(-3px,0) skewX(-2deg)}100%{transform:translate(0);filter:none}}
+.disc{position:absolute;left:57.8%;top:47.85%;width:36%;transform:translate(-50%,-50%);text-align:center}
+.who{margin-bottom:1.1em;font-size:max(15px,calc(var(--s)*.03));letter-spacing:.2em;text-transform:uppercase;cursor:pointer;user-select:none;
+text-shadow:1.5px 0 rgba(0,229,255,.55),-1.5px 0 rgba(255,0,68,.7)}
+.msg{min-height:1.4em;margin:1em 0 0;font-size:max(11px,calc(var(--s)*.017));letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.msg::before{content:"> "}
+.msg:empty{visibility:hidden}
+input{width:100%;box-sizing:border-box;background:rgba(225,29,72,.09);border:1px solid var(--rim);color:var(--ice);
+text-align:center;font:inherit;font-size:max(14px,calc(var(--s)*.026));letter-spacing:.3em;padding:.55em 0;outline:0;caret-color:var(--rim);
+clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.field{position:relative}
+.field input{padding-left:.9em;padding-right:2.4em;text-align:left;font-size:max(13px,calc(var(--s)*.022));letter-spacing:.08em}
+.field input:placeholder-shown{padding-left:2.4em;text-align:center;font-size:max(14px,calc(var(--s)*.026))}
+.eye{position:absolute;right:0;top:0;bottom:0;width:2.4em;padding:0;background:none;border:0;color:var(--dim);cursor:pointer;
+display:flex;align-items:center;justify-content:center;font-size:max(14px,calc(var(--s)*.026))}
+.eye svg{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.eye .slash{display:none}.eye.on .slash{display:block}
+.eye:hover,.eye:focus,.eye.on{color:var(--ice);outline:0}
+input::placeholder{color:#7a3a4a;letter-spacing:.15em}
+input:focus{background:rgba(225,29,72,.18);border-color:var(--ice)}
+.stage.denied .rim{stroke:#ff3b5c}
+.stage.denied .msg{color:#ff3b5c}
+.stage.denied .who{text-shadow:4px 0 var(--cy),-4px 0 #f04}
+.stage.denied .disc{animation:shake .4s}
+.stage.busy .msg,.stage.ok .msg{color:var(--ice)}
+@keyframes shake{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(calc(-50% - 9px),-50%)}75%{transform:translate(calc(-50% + 9px),-50%)}}
+.clock{position:absolute;top:5vmin;left:0;right:0;text-align:center;font-size:max(12px,1.5vmin);letter-spacing:.25em;color:var(--dim);text-transform:uppercase}
+.clock b{display:block;font-weight:400;font-size:max(28px,5vmin);letter-spacing:.12em;color:var(--ice)}
+.clock b::before{content:"// ";color:var(--rim)}
+.side{position:absolute;top:50%;transform:translateY(-50%);font-size:max(11px,1.35vmin);line-height:1.9;color:var(--dim);letter-spacing:.08em;white-space:pre}
+.side.l{left:6vmin}.side.r{right:6vmin;text-align:right;color:#6b2a3a}
+.side b{color:var(--rim);font-weight:400}
+.bar{position:absolute;left:6vmin;right:6vmin;bottom:5vmin;display:flex;justify-content:space-between;align-items:center;font-size:max(12px,1.5vmin);color:var(--dim)}
+.bar select,.bar button{background:rgba(225,29,72,.06);border:1px solid #5a1428;color:var(--dim);font:inherit;padding:.45em 1em;cursor:pointer;margin-left:.6em;text-transform:uppercase;letter-spacing:.1em;
+clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.bar select{margin:0 0 0 .8em}
+.bar select:hover,.bar button:hover,.bar select:focus,.bar button:focus{border-color:var(--rim);color:var(--ice);outline:0}
+@media (max-width:1000px){.side{display:none}}
+@media (prefers-reduced-motion:reduce){.orbit,.star{animation:none}}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="frame"></div>
+<div class="clock"><b id="time"></b><span id="date"></span></div>
+<div class="side l"><b>sys</b>  <span id="host2"></span>
+<b>link</b> secure
+<b>auth</b> <span id="state">waiting</span></div>
+<div class="side r" id="hex"></div>
+
+<div class="stage" id="stage">
+<svg viewBox="0 0 1024 1024" role="img" aria-label="Eclipse">
+<defs>
+<radialGradient id="glow" cx="512" cy="512" r="512" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#8a1535" stop-opacity=".85"/>
+<stop offset=".45" stop-color="#4a0f20" stop-opacity=".7"/>
+<stop offset="1" stop-color="#060509" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="moon" cx="360" cy="500" r="330" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#e0405f"/>
+<stop offset="1" stop-color="#a80f33"/>
+</radialGradient>
+</defs>
+<circle cx="512" cy="512" r="512" fill="url(#glow)"/>
+<g class="orbit"><circle cx="512" cy="512" r="300" fill="none" stroke="#a81b45" stroke-width="4" stroke-dasharray="6 14" opacity=".7"/></g>
+<ellipse cx="512" cy="510" rx="400" ry="150" transform="rotate(-22 512 510)" fill="none" stroke="#8a1230" stroke-width="6"/>
+<circle cx="512" cy="512" r="240" fill="url(#moon)"/>
+<circle class="rim" cx="592" cy="490" r="208" fill="#070509" stroke="#e11d48" stroke-width="8"/>
+<polygon class="star" fill="#ffe4ea" points="312,308 327,346 368,364 327,382 312,420 297,382 256,364 297,346"/>
+</svg>
+<form class="disc" id="form" autocomplete="off">
+<div class="who" id="who" title="Switch user"></div>
+<div class="field"><input id="pw" type="password" placeholder="access key" aria-label="Password" autofocus>
+<button type="button" class="eye" id="eye" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/><line class="slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg></button></div>
+<div class="msg" id="msg"></div>
+</form>
+</div>
+
+<div class="bar">
+<div><span id="host"></span><select id="sess" aria-label="Session"></select></div>
+<div><button id="reboot" type="button">restart</button><button id="off" type="button">shut down</button></div>
+</div>
+
+<script>
+(function () {
+  var started = false;
+  function mock() {
+    function sig() { var f = []; return { connect: function (c) { f.push(c); }, emit: function () { var a = arguments; f.forEach(function (c) { c.apply(null, a); }); } }; }
+    var L = { users: [{ username: "mateo", display_name: "mateo" }, { username: "guest", display_name: "guest" }],
+      sessions: [{ key: "bspwm", name: "bspwm" }], hostname: "arch-node", can_shutdown: true, can_restart: true,
+      show_prompt: sig(), authentication_complete: sig(), is_authenticated: false, in_authentication: false };
+    L.authenticate = function () { L.in_authentication = true; setTimeout(function () { L.show_prompt.emit("Password: ", "password"); }, 50); };
+    L.respond = function (p) { L.is_authenticated = p === "demo"; setTimeout(function () { L.authentication_complete.emit(); }, 400); };
+    L.cancel_authentication = function () { L.in_authentication = false; };
+    L.start_session = function (k) { document.getElementById("msg").textContent = "session: " + k; };
+    L.shutdown = L.restart = function () {};
+    return L;
+  }
+
+  function init() {
+    if (started) return; started = true;
+    var L = window.lightdm || mock();
+    var $ = function (id) { return document.getElementById(id); };
+    var stage = $("stage"), who = $("who"), msg = $("msg"), pw = $("pw"), sess = $("sess"), svg = stage.querySelector("svg");
+    var users = L.users || [], ui = 0, pass = "";
+    var still = window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches;
+    var ST = { "": "waiting", busy: "verifying", denied: "rejected", ok: "granted" };
+
+    function glitch() { if (still) return; svg.classList.remove("g"); void svg.getBoundingClientRect(); svg.classList.add("g"); }
+    function showUser() { who.textContent = "[ " + (users.length ? (users[ui].display_name || users[ui].username) : "user") + " ]"; }
+    function say(t, cls) { stage.className = "stage" + (cls ? " " + cls : ""); msg.textContent = t || ""; $("state").textContent = ST[cls || ""]; }
+
+    var eye = $("eye");
+    function hidePw() { pw.type = "password"; eye.classList.remove("on"); eye.setAttribute("aria-pressed", "false"); eye.setAttribute("aria-label", "Show password"); }
+    eye.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    eye.addEventListener("click", function () {
+      var show = pw.type === "password";
+      pw.type = show ? "text" : "password";
+      eye.classList.toggle("on", show);
+      eye.setAttribute("aria-pressed", show ? "true" : "false");
+      eye.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      pw.focus();
+    });
+
+    showUser(); say("");
+    $("host").textContent = $("host2").textContent = L.hostname || "";
+    who.addEventListener("click", function () { if (users.length > 1) { ui = (ui + 1) % users.length; showUser(); pw.focus(); } });
+
+    (L.sessions || []).forEach(function (s) {
+      var o = document.createElement("option"); o.value = s.key; o.textContent = s.name; sess.appendChild(o);
+    });
+    var pref = (L.sessions || []).filter(function (s) { return /bspwm/i.test(s.key); })[0];
+    sess.value = pref ? pref.key : (L.default_session || (L.sessions && L.sessions[0] && L.sessions[0].key) || "");
+
+    L.show_prompt.connect(function () { L.respond(pass); });
+    L.authentication_complete.connect(function () {
+      pass = "";
+      if (L.is_authenticated) { say("access granted", "ok"); L.start_session(sess.value); }
+      else { say("access denied", "denied"); glitch(); pw.value = ""; pw.focus(); }
+    });
+
+    $("form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!pw.value || !users.length) return;
+      pass = pw.value; pw.value = ""; hidePw(); say("verifying", "busy");
+      if (L.in_authentication && L.cancel_authentication) L.cancel_authentication();
+      L.authenticate(users[ui].username);
+    });
+    pw.addEventListener("input", function () { if (stage.classList.contains("denied")) say(""); });
+
+    $("reboot").style.display = L.can_restart ? "" : "none";
+    $("off").style.display = L.can_shutdown ? "" : "none";
+    $("reboot").addEventListener("click", function () { L.restart(); });
+    $("off").addEventListener("click", function () { L.shutdown(); });
+
+    function tick() {
+      var d = new Date();
+      $("time").textContent = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      $("date").textContent = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    }
+    tick(); setInterval(tick, 10000);
+
+    var rows = [];
+    function hx(n) { var s = ""; for (var i = 0; i < n; i++) s += Math.floor(Math.random() * 16).toString(16); return s; }
+    function feed() { rows.push(hx(4) + " " + hx(8) + " " + hx(8)); if (rows.length > 8) rows.shift(); $("hex").textContent = rows.join("\n"); }
+    for (var k = 0; k < 8; k++) feed();
+    if (!still) { setInterval(feed, 260); setInterval(glitch, 7000); setTimeout(glitch, 500); }
+
+    pw.focus();
+  }
+
+  var inGreeter = /QtWebEngine/i.test(navigator.userAgent);
+  window.addEventListener("GreeterReady", init);
+  if (window.lightdm || !inGreeter) init();
+  else setTimeout(function () { if (window.lightdm) init(); }, 3000);
+})();
+</script>
+</body>
+</html>
